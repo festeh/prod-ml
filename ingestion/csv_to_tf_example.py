@@ -21,5 +21,5 @@ def csv_to_example_gen(path, pattern='sample.csv'):
 
 if __name__ == '__main__':
     context = InteractiveContext()
-    path_to_csv_file = DATA_DIR / "csv/"
+    path_to_csv_file = DATA_DIR / "complaints/"
     context.run(csv_to_example_gen(path_to_csv_file))
