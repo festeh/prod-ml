@@ -40,3 +40,4 @@ if __name__ == '__main__':
                     ))
             )
             writer.write(example.SerializeToString())
+            writer.close()
