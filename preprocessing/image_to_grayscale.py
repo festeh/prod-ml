@@ -8,11 +8,9 @@ import tensorflow_transform as tft
 
 def convert_image_to_grayscale(inputs):
     img_bytes = inputs['img']
-    flat_bytes = tf.reshape(img_bytes, [-1])
-    print(img_bytes, flat_bytes)
-    # print(img_bytes.numpy())
-    image = tf.image.convert_image_dtype(image, tf.int64)
-    return {"img_gs": image}
+    # image = tf.io.decode_image(img_bytes)
+    # image = tf.image.convert_image_dtype(image, tf.int64)
+    return {"img_gs": img_bytes}
 
 
 def save_images_to_tfrecord(images_paths, save_path):
