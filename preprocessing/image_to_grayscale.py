@@ -1,3 +1,4 @@
+from tensorflow.python.ops.map_fn import map_fn
 from tensorflow_transform.tf_metadata.dataset_metadata import DatasetMetadata
 from tensorflow_transform.tf_metadata.schema_utils import schema_from_feature_spec
 import tensorflow as tf
@@ -6,11 +7,17 @@ import tensorflow_transform.beam as tft_beam
 import tensorflow_transform as tft
 
 
-def convert_image_to_grayscale(inputs):
-    img_bytes = inputs['img']
-    # image = tf.io.decode_image(img_bytes)
-    # image = tf.image.convert_image_dtype(image, tf.int64)
-    return {"img_gs": img_bytes}
+# tf.function
+def convert_image_to_grayscale(img_bytes):
+    image = tf.io.decode_jpeg(img_bytes, channels=3)
+    # gayscale_image = tf.image.rgb_to_grayscale(
+    #     image, name=None
+    # )
+    return tf.io.encode_jpeg(image)
+
+
+def preprocessing_fn(inputs):
+    return {"img_gs": map_fn(convert_image_to_grayscale, inputs['img'])}
 
 
 def save_images_to_tfrecord(images_paths, save_path):
@@ -32,9 +39,9 @@ class ImageConverter:
             ))
 
     def convert(self, images):
-        dataset = [{"img": img.numpy()} for img in images]
+        dataset = [{"img": img.numpy()} for img in images][2:3]
         with beam.Pipeline() as pipeline:
             with tft_beam.Context(temp_dir="tmp"):
                 transformed_dataset, transform_fn = (
-                        (dataset, self.metadata) | tft_beam.AnalyzeAndTransformDataset(convert_image_to_grayscale))
+                        (dataset, self.metadata) | tft_beam.AnalyzeAndTransformDataset(preprocessing_fn))
                 return transformed_dataset
