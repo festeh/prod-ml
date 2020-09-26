@@ -10,10 +10,10 @@ import tensorflow_transform as tft
 # tf.function
 def convert_image_to_grayscale(img_bytes):
     image = tf.io.decode_jpeg(img_bytes, channels=3)
-    # gayscale_image = tf.image.rgb_to_grayscale(
-    #     image, name=None
-    # )
-    return tf.io.encode_jpeg(image)
+    gayscale_image = tf.image.rgb_to_grayscale(
+        image, name=None
+    )
+    return tf.io.encode_jpeg(gayscale_image)
 
 
 def preprocessing_fn(inputs):
@@ -39,9 +39,9 @@ class ImageConverter:
             ))
 
     def convert(self, images):
-        dataset = [{"img": img.numpy()} for img in images][2:3]
+        dataset = [{"img": img} for img in images]
         with beam.Pipeline() as pipeline:
             with tft_beam.Context(temp_dir="tmp"):
                 transformed_dataset, transform_fn = (
                         (dataset, self.metadata) | tft_beam.AnalyzeAndTransformDataset(preprocessing_fn))
-                return transformed_dataset
+                return transformed_dataset[0]
