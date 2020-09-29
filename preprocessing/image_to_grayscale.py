@@ -8,6 +8,16 @@ import tensorflow_transform as tft
 
 
 # tf.function
+def save_images_to_tfrecord(images_paths, save_path):
+    with tf.io.TFRecordWriter(save_path) as writer:
+        for img_path in images_paths:
+            img = tf.io.read_file(img_path.resolve().as_posix())
+            example = tf.train.Example(features=tf.train.Features(feature={
+                'img': tf.train.Feature(bytes_list=tf.train.BytesList(value=[img.numpy()]))
+            }))
+            writer.write(example.SerializeToString())
+
+
 def convert_image_to_grayscale(img_bytes):
     image = tf.io.decode_jpeg(img_bytes, channels=3)
     gayscale_image = tf.image.rgb_to_grayscale(
@@ -18,16 +28,6 @@ def convert_image_to_grayscale(img_bytes):
 
 def preprocessing_fn(inputs):
     return {"img_gs": map_fn(convert_image_to_grayscale, inputs['img'])}
-
-
-def save_images_to_tfrecord(images_paths, save_path):
-    with tf.io.TFRecordWriter(save_path) as writer:
-        for img_path in images_paths:
-            img = tf.io.read_file(img_path.resolve().as_posix())
-            example = tf.train.Example(features=tf.train.Features(feature={
-                'img': tf.train.Feature(bytes_list=tf.train.BytesList(value=[img.numpy()]))
-            }))
-            writer.write(example.SerializeToString())
 
 
 class ImageConverter:
