@@ -48,7 +48,7 @@ def transformed_name(key):
 
 
 def fill_in_missing(x):
-    default_value = '' if x.dtype == tf.string or to_string else 0
+    default_value = '' if x.dtype == tf.string else 0
     if type(x) == tf.SparseTensor:
         x = tf.sparse.to_dense(
             tf.SparseTensor(x.indices, x.values, [x.dense_shape[0], 1]),
