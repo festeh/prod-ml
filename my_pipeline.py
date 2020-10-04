@@ -2,7 +2,6 @@ from pathlib import Path
 
 from tfx.components import CsvExampleGen, StatisticsGen, SchemaGen, ExampleValidator, Transform
 from tfx.proto import example_gen_pb2
-from tfx.utils.dsl_utils import external_input
 
 from constants import COMPLAINTS_DIR
 
@@ -17,12 +16,17 @@ class DataValidationPPl:
         self.preprocessor = self.get_transform()
 
     def get_example_gen(self):
-        pattern = self.path.name
-        c_input = example_gen_pb2.Input(splits=[
-            example_gen_pb2.Input.Split(name='data', pattern=pattern)
-        ])
-        examples = external_input(self.path.parent)
-        return CsvExampleGen(input_base=self.path.parent.as_posix(), input_config=c_input)
+        output = example_gen_pb2.Output(
+            split_config=example_gen_pb2.SplitConfig(
+                splits=[
+                    example_gen_pb2.SplitConfig.Split(
+                        name="train", hash_buckets=9
+                    ),
+                    example_gen_pb2.SplitConfig.Split(name="eval", hash_buckets=1),
+                ]
+            )
+        )
+        return CsvExampleGen(input_base=self.path.as_posix(), output_config=output)
 
     def get_stats_gen(self):
         return StatisticsGen(examples=self.example_gen.outputs["examples"])
