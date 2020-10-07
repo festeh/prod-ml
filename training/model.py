@@ -1,9 +1,15 @@
+from os import environ
+from pathlib import Path
+
+environ["TFHUB_CACHE_DIR"] = (Path(__file__).parent / "model_weights").as_posix()
+
 from logging import basicConfig, DEBUG
 
 from tensorflow.python.keras import Input
 import tensorflow as tf
 import tensorflow_hub as hub
 from tensorflow.python.keras.layers import Dense, concatenate
+from tensorflow.python.keras.models import Model
 
 from preprocessing.complaints_preporcessing import ONE_HOT_FEATURES, transformed_name, BUCKET_FEATURES, TEXT_FEATURES
 
@@ -19,7 +25,7 @@ def get_model():
                                  name=transformed_name(name),
                                  dtype=tf.string))
 
-    model_inputs = input_features + input_texts
+    inputs = input_features + input_texts
     MODULE_URL = "https://tfhub.dev/google/universal-sentence-encoder/4"
     embed = hub.KerasLayer(MODULE_URL)
     embed_narrative = embed(tf.reshape(input_texts[0], [-1]))
@@ -30,7 +36,15 @@ def get_model():
     wide = tf.keras.layers.Dense(16, activation='relu')(wide_ff)
     both = concatenate([deep, wide])
 
-    return model_inputs
+    output = Dense(1, activation="sigmoid")(both)
+    model = Model(inputs, output)
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(lr=0.001),
+        loss='binary_crossentropy',
+        metrics=[tf.keras.metrics.BinaryAccuracy(),
+                 tf.keras.metrics.TruePositives()]
+    )
+    return model
 
 
 if __name__ == '__main__':
