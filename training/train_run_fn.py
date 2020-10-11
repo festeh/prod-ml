@@ -1,5 +1,8 @@
+from pathlib import Path
+
 from tensorflow import TensorSpec
 from tensorflow.python.data.experimental import make_batched_features_dataset
+from tensorflow.keras.callbacks import TensorBoard
 from tensorflow_transform import TFTransformOutput
 import tensorflow as tf
 
@@ -43,12 +46,16 @@ def run_fn(args):
     train_dataset = input_fn(args.train_files, transform_graph)
     val_dataset = input_fn(args.eval_files, transform_graph)
 
+    print(args.serving_model_dir)
+    tb_callback = TensorBoard(Path(args.serving_model_dir) / 'logs', update_freq='batch')
+
     model = get_model()
     model.fit(
         train_dataset,
         steps_per_epoch=args.train_steps,
         validation_data=val_dataset,
         validation_steps=args.eval_steps,
+        callbacks=[tb_callback]
     )
     signatures = {
         "serving_default": get_serve_fn(model, transform_graph).get_concrete_function(
