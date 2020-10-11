@@ -4,6 +4,7 @@ from tfx.components import CsvExampleGen, StatisticsGen, SchemaGen, ExampleValid
 from tfx.proto import example_gen_pb2
 
 from constants import COMPLAINTS_DIR
+from training.train import get_trainer
 
 
 class DataValidationPPl:
@@ -13,7 +14,8 @@ class DataValidationPPl:
         self.stats_gen = self.get_stats_gen()
         self.schema_gen = self.get_schema_gen(True)
         self.example_validator = self.get_example_validator()
-        self.preprocessor = self.get_transform()
+        self.transform = self.get_transform()
+        self.trainer = self.get_trainer()
 
     def get_example_gen(self):
         output = example_gen_pb2.Output(
@@ -43,6 +45,10 @@ class DataValidationPPl:
                          schema=self.schema_gen.outputs["schema"],
                          module_file=(Path(__file__).parent/"preprocessing/complaints_preporcessing.py").as_posix()
                          )
+
+    def get_trainer(self):
+        return get_trainer(self.transform,
+                           self.schema_gen)
 
 
 if __name__ == '__main__':
