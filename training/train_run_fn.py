@@ -28,14 +28,14 @@ def input_fn(file_pat, transform_graph: TFTransformOutput, batch_size=32):
 
 
 def get_serve_fn(model, transform_graph):
-    features_layer = transform_graph.transform_features_layer()
+    model.tft_layer = transform_graph.transform_features_layer()
 
     @tf.function
     def serve_fn(serialized_examples):
         feature_spec = transform_graph.raw_feature_spec()
         feature_spec.pop(LABEL_KEY)
         parsed_features = tf.io.parse_example(serialized_examples, feature_spec)
-        transformed_features = features_layer(parsed_features)
+        transformed_features = model.tft_layer(parsed_features)
         return {"outputs": model(transformed_features)}
 
     return serve_fn
@@ -59,7 +59,7 @@ def run_fn(args):
     )
     signatures = {
         "serving_default": get_serve_fn(model, transform_graph).get_concrete_function(
-            TensorSpec(shape=[None], dtype=tf.string, name="example")
+            TensorSpec(shape=[None], dtype=tf.string, name="examples")
         )
     }
     model.save(args.serving_model_dir, save_format="tf", signatures=signatures)
